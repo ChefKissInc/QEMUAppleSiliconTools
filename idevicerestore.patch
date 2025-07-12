@@ -1,0 +1,51 @@
+diff --git a/src/asr.c b/src/asr.c
+index e140980..2da14e3 100644
+--- a/src/asr.c
++++ b/src/asr.c
+@@ -50,7 +50,7 @@
+ int asr_open_with_timeout(idevice_t device, asr_client_t* asr, uint16_t port)
+ {
+ 	int i = 0;
+-	int attempts = 10;
++	int attempts = 100;
+ 	idevice_connection_t connection = NULL;
+ 	idevice_error_t device_error = IDEVICE_E_SUCCESS;
+ 
+@@ -246,11 +246,11 @@ int asr_perform_validation(asr_client_t asr, ipsw_file_handle_t file)
+ 	while (1) {
+ 		if (asr_receive(asr, &packet) < 0) {
+ 			logger(LL_ERROR, "Unable to receive validation packet\n");
+-			return -1;
++			// return -1;
+ 		}
+ 
+ 		if (packet == NULL) {
+-			if (attempts < 5) {
++			if (attempts < 10) {
+ 				logger(LL_INFO, "Retrying to receive validation packet... %d\n", attempts);
+ 				attempts++;
+ 				sleep(1);
+@@ -366,7 +366,7 @@ int asr_send_payload(asr_client_t asr, ipsw_file_handle_t file)
+ 	data = (char*)malloc(ASR_PAYLOAD_CHUNK_SIZE + 20);
+ 
+ 	i = length;
+-	int retry = 3;
++	int retry = 10;
+ 	while(i > 0 && retry >= 0) {
+ 		uint32_t size = ASR_PAYLOAD_CHUNK_SIZE;
+ 		uint32_t sendsize = 0;
+diff --git a/src/restore.c b/src/restore.c
+index aa9bf89..69aba31 100644
+--- a/src/restore.c
++++ b/src/restore.c
+@@ -301,6 +301,10 @@ irecv_device_t restore_get_irecv_device(struct idevicerestore_client_t* client)
+ 	}
+ 
+ 	plist_get_string_val(node, &model);
++	logger(LL_INFO, "INFO: model is %s\n", model);
++	if (strstr(model, "DEV")) {
++		strncpy(strstr(model, "DEV"), "AP\0", 3);
++	}
+ 	irecv_devices_get_device_by_hardware_model(model, &irecv_device);
+ 	free(model);
+ 
